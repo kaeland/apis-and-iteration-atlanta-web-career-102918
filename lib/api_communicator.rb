@@ -2,12 +2,22 @@ require 'rest-client'
 require 'json'
 require 'pry'
 
+#user has entered character, that value is passed in as the argument for this f.
 def get_character_movies_from_api(character)
   #make the web request
   response_string = RestClient.get('http://www.swapi.co/api/people/')
   response_hash = JSON.parse(response_string)
-  
-  # NOTE: in this demonstration we name many of the variables _hash or _array. 
+
+  response_hash["results"].collect do |person|
+    if person["name"].downcase == character
+        person["films"].collect do |movie|
+        response_string_two = RestClient.get("#{movie}")
+        response_hash_two = JSON.parse(response_string_two)
+        response_hash_two["title"]
+      end
+    end
+  end
+  # NOTE: in this demonstration we name many of the variables _hash or _array.
   # This is done for educational purposes. This is not typically done in code.
 
 
@@ -15,7 +25,7 @@ def get_character_movies_from_api(character)
   #   `character`
   # collect those film API urls, make a web request to each URL to get the info
   #  for that film
-  # return value of this method should be collection of info about each film.
+  # return value of this method should be a collection of info about each film.
   #  i.e. an array of hashes in which each hash reps a given film
   # this collection will be the argument given to `parse_character_movies`
   #  and that method will do some nice presentation stuff: puts out a list
@@ -24,14 +34,41 @@ end
 
 def print_movies(films_hash)
   # some iteration magic and puts out the movies in a nice list
+  films_hash.each_with_index do |film, i|
+    # binding.pry
+    puts "#{i + 1} #{film}"
+  end
 end
 
 def show_character_movies(character)
   films_array = get_character_movies_from_api(character)
-  print_movies(films_array)
+  new_array = films_array.flatten.compact
+  print_movies(new_array)
 end
 
 ## BONUS
 
 # that `get_character_movies_from_api` method is probably pretty long. Does it do more than one job?
 # can you split it up into helper methods?
+
+def old_get_character_movies_from_api(character)
+  #make the web request
+  response_string = RestClient.get('http://www.swapi.co/api/people/')
+  response_hash = JSON.parse(response_string)
+
+  films = []
+  response_hash["results"].each do |person|
+    #
+    films_urls = []
+    if person["name"].downcase == character
+      films_urls << person["films"]
+    end
+
+    films_urls.flatten.each do |movie|
+      response_string_two = RestClient.get("#{movie}")
+      response_hash_two = JSON.parse(response_string_two)
+      films << response_hash_two["title"]
+    end
+  end
+  return films
+  end
